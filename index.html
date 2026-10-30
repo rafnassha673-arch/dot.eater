@@ -30,6 +30,7 @@ body {
 
 .app {
   max-width: 500px;
+  height: 100vh;
   height: 100dvh;
   margin: auto;
   padding: 16px;
@@ -350,8 +351,10 @@ canvas {
 
 <script>
 
-// DOT EATER V4
+// =============================
+// DOT EATER V5
 // ZYN PLAY
+// =============================
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -523,8 +526,6 @@ function drawSnake(alpha) {
 
   });
 
-  // BODY
-
   positions.slice(1).forEach(p => {
 
     ctx.save();
@@ -546,8 +547,6 @@ function drawSnake(alpha) {
 
   });
 
-  // HEAD
-
   const h = positions[0];
 
   const hx = h.x*CELL+15;
@@ -562,8 +561,6 @@ function drawSnake(alpha) {
   ctx.beginPath();
   ctx.arc(hx,hy,12,0,Math.PI*2);
   ctx.fill();
-
-  // EYES
 
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#180909";
@@ -626,13 +623,9 @@ function step() {
 
   }
 
-  // PREVIOUS POSITIONS
-
   previousSnake = snake.map(p => ({...p}));
 
   snake.unshift(head);
-
-  // EATING
 
   if(eating) {
 
@@ -661,7 +654,7 @@ function step() {
 }
 
 
-// 60 FPS LOOP
+// 60 FPS GAME LOOP
 
 function gameLoop(time) {
 
@@ -803,7 +796,7 @@ document.addEventListener("keydown",e=>{
 });
 
 
-// SWIPE
+// SWIPE CONTROL
 
 let startX=0;
 let startY=0;
@@ -872,11 +865,38 @@ $("help").onclick=()=>{
 };
 
 
-// STARTUP
+// INITIALIZE
 
 init();
 
 requestAnimationFrame(gameLoop);
+
+
+// =============================
+// PWA SERVICE WORKER
+// =============================
+
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener("load", () => {
+
+    navigator.serviceWorker.register("./sw.js")
+
+      .then(registration => {
+
+        console.log("DOT EATER Offline Ready!");
+
+      })
+
+      .catch(error => {
+
+        console.error("Service Worker Error:", error);
+
+      });
+
+  });
+
+}
 
 </script>
 
