@@ -5,7 +5,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#000000">
-
 <title>DOT EATER | ZYN PLAY</title>
 
 <style>
@@ -27,7 +26,7 @@ body {
   max-width: 500px;
   height: 100dvh;
   margin: auto;
-  padding: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
@@ -60,7 +59,7 @@ header {
 
 .title {
   text-align: center;
-  margin: 18px 0;
+  margin: 12px 0;
 }
 
 .title small {
@@ -71,7 +70,7 @@ header {
 .title h1 {
   font-size: 28px;
   letter-spacing: 4px;
-  margin: 8px 0;
+  margin: 7px 0;
 }
 
 .title p {
@@ -84,7 +83,7 @@ header {
   justify-content: space-between;
   color: #888;
   font-size: 11px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .stats strong {
@@ -134,7 +133,7 @@ canvas {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  margin: 15px 0 8px;
+  margin: 12px 0 7px;
 }
 
 .control-row {
@@ -176,7 +175,7 @@ canvas {
   color: #666;
   font-size: 11px;
   line-height: 1.5;
-  margin: 12px 0;
+  margin: 10px 0;
 }
 
 .footer {
@@ -185,7 +184,7 @@ canvas {
   font-size: 10px;
   letter-spacing: 3px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 .overlay {
@@ -234,11 +233,11 @@ canvas {
 
 @media(max-height:700px) {
   .app {
-    padding: 10px 16px;
+    padding: 8px 14px;
   }
 
   .title {
-    margin: 8px 0;
+    margin: 6px 0;
   }
 
   .title h1 {
@@ -246,11 +245,11 @@ canvas {
   }
 
   .board {
-    max-height: min(65vw, 350px);
+    max-height: min(62vw, 340px);
   }
 
   .controls {
-    margin: 8px 0;
+    margin: 6px 0;
   }
 }
 </style>
@@ -277,12 +276,13 @@ canvas {
   <span>SPEED <strong id="speed">1×</strong></span>
 </div>
 
-<div class="board" id="board">
+<div class="board">
 
   <canvas id="game" width="600" height="600"></canvas>
 
   <svg class="web" viewBox="0 0 180 180"
        fill="none" stroke="#aaa" stroke-width="1">
+
     <path d="M0 0 L180 180 M0 0 L180 0
     M0 0 L0 180 M0 0 L180 90
     M0 0 L90 180 M0 0 L135 180"/>
@@ -291,6 +291,7 @@ canvas {
     M50 10 Q75 75 20 50
     M90 15 Q100 95 40 90
     M130 20 Q130 130 70 130"/>
+
   </svg>
 
   <div class="spider">🕷️</div>
@@ -342,17 +343,24 @@ canvas {
 
 <script>
 
+// ============================
+// DOT EATER V3
+// ZYN PLAY
+// ============================
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const SIZE = 20;
 const CELL = 30;
+const FPS = 60;
 
-let snake;
+let snake = [];
+let previousSnake = [];
 let food;
 
-let direction;
-let nextDirection;
+let direction = {x:1,y:0};
+let nextDirection = {x:1,y:0};
 
 let score = 0;
 let best = Number(localStorage.getItem("zynBest") || 0);
@@ -360,7 +368,8 @@ let best = Number(localStorage.getItem("zynBest") || 0);
 let running = false;
 let paused = false;
 
-let speed = 160;
+let speed = 100;
+
 let lastTime = 0;
 let accumulator = 0;
 
@@ -369,13 +378,16 @@ const $ = id => document.getElementById(id);
 $("best").textContent = best;
 
 
+// ============================
 // FOOD GENERATOR
+// ============================
 
 function newFood() {
 
   let p;
 
   do {
+
     p = {
       x: Math.floor(Math.random() * SIZE),
       y: Math.floor(Math.random() * SIZE)
@@ -389,70 +401,85 @@ function newFood() {
 }
 
 
-// INITIALIZE GAME
+// ============================
+// INITIALIZE
+// ============================
 
 function init() {
 
   snake = [
-    {x: 5, y: 10},
-    {x: 4, y: 10},
-    {x: 3, y: 10},
-    {x: 2, y: 10}
+    {x:5,y:10},
+    {x:4,y:10},
+    {x:3,y:10},
+    {x:2,y:10}
   ];
 
-  direction = {x: 1, y: 0};
-  nextDirection = {x: 1, y: 0};
+  previousSnake = snake.map(p => ({...p}));
+
+  direction = {x:1,y:0};
+  nextDirection = {x:1,y:0};
 
   score = 0;
-  speed = 160;
+  speed = 100;
 
   food = newFood();
 
+  accumulator = 0;
+
   updateStats();
-  draw();
+  draw(1);
 }
 
 
-// UPDATE SCORE
+// ============================
+// SCORE
+// ============================
 
 function updateStats() {
 
   $("score").textContent =
-    String(score).padStart(2, "0");
+    String(score).padStart(2,"0");
 
   $("best").textContent =
-    String(best).padStart(2, "0");
+    String(best).padStart(2,"0");
 
   $("speed").textContent =
-    (160 / speed).toFixed(1) + "×";
+    (100 / speed).toFixed(1) + "×";
 }
 
 
-// DRAW GAME
+// ============================
+// DRAW BACKGROUND
+// ============================
 
-function draw() {
+function drawBackground() {
 
-  ctx.clearRect(0, 0, 600, 600);
+  ctx.fillStyle = "#030303";
+  ctx.fillRect(0,0,600,600);
 
-  // Background dots
+  for(let y=15;y<600;y+=30) {
 
-  for (let y = 15; y < 600; y += 30) {
-
-    for (let x = 15; x < 600; x += 30) {
+    for(let x=15;x<600;x+=30) {
 
       ctx.fillStyle = "#202020";
 
       ctx.beginPath();
-
-      ctx.arc(x, y, 2, 0, Math.PI * 2);
-
+      ctx.arc(x,y,2,0,Math.PI*2);
       ctx.fill();
 
     }
   }
+}
 
 
-  // Orange food
+// ============================
+// DRAW FOOD
+// ============================
+
+function drawFood() {
+
+  const fx = food.x * CELL + 15;
+  const fy = food.y * CELL + 15;
 
   ctx.save();
 
@@ -462,29 +489,64 @@ function draw() {
   ctx.fillStyle = "#ff8a22";
 
   ctx.beginPath();
-
-  ctx.arc(
-    food.x * CELL + 15,
-    food.y * CELL + 15,
-    9,
-    0,
-    Math.PI * 2
-  );
-
+  ctx.arc(fx,fy,9,0,Math.PI*2);
   ctx.fill();
 
   ctx.restore();
+}
 
 
-  // Snake body
+// ============================
+// SMOOTH SNAKE POSITION
+// ============================
 
-  snake.slice(1).forEach(p => {
+function getSmoothPosition(current, old, alpha) {
+
+  let dx = current.x - old.x;
+  let dy = current.y - old.y;
+
+  // Smooth edge wrapping
+
+  if(dx > SIZE/2) dx -= SIZE;
+  if(dx < -SIZE/2) dx += SIZE;
+
+  if(dy > SIZE/2) dy -= SIZE;
+  if(dy < -SIZE/2) dy += SIZE;
+
+  let x = old.x + dx * alpha;
+  let y = old.y + dy * alpha;
+
+  return {
+    x: ((x % SIZE) + SIZE) % SIZE,
+    y: ((y % SIZE) + SIZE) % SIZE
+  };
+}
+
+
+// ============================
+// DRAW SNAKE
+// ============================
+
+function drawSnake(alpha) {
+
+  const positions = snake.map((p,i) => {
+
+    const old = previousSnake[i] || p;
+
+    return getSmoothPosition(p,old,alpha);
+
+  });
+
+
+  // Body
+
+  positions.slice(1).forEach((p,i) => {
 
     ctx.save();
 
     ctx.fillStyle = "#e95f55";
     ctx.shadowColor = "#ff665c";
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
 
     ctx.beginPath();
 
@@ -493,7 +555,7 @@ function draw() {
       p.y * CELL + 15,
       8,
       0,
-      Math.PI * 2
+      Math.PI*2
     );
 
     ctx.fill();
@@ -503,9 +565,9 @@ function draw() {
   });
 
 
-  // Snake head
+  // Head
 
-  const h = snake[0];
+  const h = positions[0];
 
   const hx = h.x * CELL + 15;
   const hy = h.y * CELL + 15;
@@ -514,12 +576,10 @@ function draw() {
 
   ctx.fillStyle = "#ff665c";
   ctx.shadowColor = "#ff665c";
-  ctx.shadowBlur = 20;
+  ctx.shadowBlur = 22;
 
   ctx.beginPath();
-
-  ctx.arc(hx, hy, 12, 0, Math.PI * 2);
-
+  ctx.arc(hx,hy,12,0,Math.PI*2);
   ctx.fill();
 
   // Eyes
@@ -527,13 +587,13 @@ function draw() {
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#180909";
 
-  let px = -direction.y * 4;
-  let py = direction.x * 4;
+  const px = direction.x * 4;
+  const py = direction.y * 4;
 
   ctx.beginPath();
 
-  ctx.arc(hx + px - 3, hy + py - 3, 2, 0, Math.PI * 2);
-  ctx.arc(hx + px + 3, hy + py + 3, 2, 0, Math.PI * 2);
+  ctx.arc(hx+px-3,hy+py-3,2,0,Math.PI*2);
+  ctx.arc(hx+px+3,hy+py+3,2,0,Math.PI*2);
 
   ctx.fill();
 
@@ -542,16 +602,30 @@ function draw() {
 }
 
 
+// ============================
+// RENDER
+// ============================
+
+function draw(alpha=1) {
+
+  drawBackground();
+  drawFood();
+  drawSnake(alpha);
+
+}
+
+
+// ============================
 // GAME MOVEMENT
+// ============================
 
 function step() {
 
   direction = {...nextDirection};
 
   // EDGE WRAPPING
-  // Crossing one edge brings snake to opposite edge.
 
-  let head = {
+  const head = {
 
     x: (snake[0].x + direction.x + SIZE) % SIZE,
 
@@ -559,24 +633,20 @@ function step() {
 
   };
 
-
   const eating =
     head.x === food.x &&
     head.y === food.y;
 
 
-  // SELF COLLISION ONLY
+  // SELF COLLISION
 
   const body = eating
     ? snake
-    : snake.slice(0, -1);
+    : snake.slice(0,-1);
 
-  if (
-    body.some(p =>
-      p.x === head.x &&
-      p.y === head.y
-    )
-  ) {
+  if(body.some(p =>
+    p.x === head.x && p.y === head.y
+  )) {
 
     gameOver();
     return;
@@ -584,28 +654,32 @@ function step() {
   }
 
 
-  // Move snake
+  // SAVE PREVIOUS POSITIONS
+
+  previousSnake = snake.map(p => ({...p}));
 
   snake.unshift(head);
 
 
-  // Eat food
+  // FOOD EATEN
 
-  if (eating) {
+  if(eating) {
 
     score++;
 
-    if (score > best) {
+    if(score > best) {
 
       best = score;
 
-      localStorage.setItem("zynBest", best);
+      localStorage.setItem("zynBest",best);
 
     }
 
     food = newFood();
 
-    speed = Math.max(65, 160 - score * 4);
+    // Speed increases gradually
+
+    speed = Math.max(45,100-score*3);
 
     updateStats();
 
@@ -615,37 +689,51 @@ function step() {
 
   }
 
-  draw();
-
 }
 
 
-// GAME LOOP
+// ============================
+// 60 FPS ANIMATION LOOP
+// ============================
 
 function gameLoop(time) {
 
   requestAnimationFrame(gameLoop);
 
-  if (!running || paused) return;
+  if(!running || paused) return;
 
-  let delta = Math.min(time - lastTime, 100);
+  if(!lastTime) lastTime = time;
+
+  const delta = Math.min(time-lastTime,50);
 
   lastTime = time;
 
   accumulator += delta;
 
-  if (accumulator >= speed) {
+
+  while(accumulator >= speed && running && !paused) {
 
     step();
 
-    accumulator = 0;
+    accumulator -= speed;
+
+  }
+
+
+  // Render at screen refresh rate
+
+  if(running) {
+
+    draw(accumulator/speed);
 
   }
 
 }
 
 
+// ============================
 // START GAME
+// ============================
 
 function startGame() {
 
@@ -654,8 +742,8 @@ function startGame() {
   running = true;
   paused = false;
 
+  lastTime = 0;
   accumulator = 0;
-  lastTime = performance.now();
 
   $("startScreen").classList.add("hidden");
   $("endScreen").classList.add("hidden");
@@ -665,7 +753,9 @@ function startGame() {
 }
 
 
+// ============================
 // GAME OVER
+// ============================
 
 function gameOver() {
 
@@ -682,29 +772,28 @@ function gameOver() {
 }
 
 
+// ============================
 // DIRECTION CONTROL
+// ============================
 
 function setDirection(name) {
 
   const dirs = {
 
-    up:    {x: 0, y: -1},
-
-    down:  {x: 0, y: 1},
-
-    left:  {x: -1, y: 0},
-
-    right: {x: 1, y: 0}
+    up:    {x:0,y:-1},
+    down:  {x:0,y:1},
+    left:  {x:-1,y:0},
+    right: {x:1,y:0}
 
   };
 
   const d = dirs[name];
 
-  if (!d) return;
+  if(!d) return;
 
   // Prevent reverse movement
 
-  if (
+  if(
     d.x === -direction.x &&
     d.y === -direction.y
   ) return;
@@ -714,11 +803,15 @@ function setDirection(name) {
 }
 
 
+// ============================
 // MOBILE BUTTONS
+// ============================
 
 document.querySelectorAll("[data-dir]").forEach(btn => {
 
-  btn.addEventListener("click", () => {
+  btn.addEventListener("pointerdown",e => {
+
+    e.preventDefault();
 
     setDirection(btn.dataset.dir);
 
@@ -727,25 +820,27 @@ document.querySelectorAll("[data-dir]").forEach(btn => {
 });
 
 
-// KEYBOARD CONTROL
+// ============================
+// KEYBOARD
+// ============================
 
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown",e => {
 
   const keys = {
 
-    ArrowUp: "up",
-    ArrowDown: "down",
-    ArrowLeft: "left",
-    ArrowRight: "right",
+    ArrowUp:"up",
+    ArrowDown:"down",
+    ArrowLeft:"left",
+    ArrowRight:"right",
 
-    w: "up",
-    s: "down",
-    a: "left",
-    d: "right"
+    w:"up",
+    s:"down",
+    a:"left",
+    d:"right"
 
   };
 
-  if (keys[e.key]) {
+  if(keys[e.key]) {
 
     e.preventDefault();
 
@@ -753,7 +848,7 @@ document.addEventListener("keydown", e => {
 
   }
 
-  if (e.key === " ") {
+  if(e.key === " ") {
 
     e.preventDefault();
 
@@ -764,28 +859,28 @@ document.addEventListener("keydown", e => {
 });
 
 
+// ============================
 // SWIPE CONTROL
+// ============================
 
 let startX = 0;
 let startY = 0;
 
-canvas.addEventListener("pointerdown", e => {
+canvas.addEventListener("pointerdown",e => {
 
   startX = e.clientX;
   startY = e.clientY;
 
 });
 
-canvas.addEventListener("pointerup", e => {
+canvas.addEventListener("pointerup",e => {
 
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
 
-  if (
-    Math.max(Math.abs(dx), Math.abs(dy)) < 18
-  ) return;
+  if(Math.max(Math.abs(dx),Math.abs(dy)) < 10) return;
 
-  if (Math.abs(dx) > Math.abs(dy)) {
+  if(Math.abs(dx) > Math.abs(dy)) {
 
     setDirection(dx > 0 ? "right" : "left");
 
@@ -798,25 +893,28 @@ canvas.addEventListener("pointerup", e => {
 });
 
 
+// ============================
 // PAUSE / RESUME
+// ============================
 
 function togglePause() {
 
-  if (!running) return;
+  if(!running) return;
 
   paused = !paused;
 
   $("pauseBtn").textContent =
     paused ? "▶ RESUME" : "Ⅱ PAUSE";
 
-  lastTime = performance.now();
-
+  lastTime = 0;
   accumulator = 0;
 
 }
 
 
+// ============================
 // BUTTON EVENTS
+// ============================
 
 $("startBtn").onclick = startGame;
 
@@ -833,14 +931,16 @@ $("help").onclick = () => {
     "DOT EATER\n\n" +
     "Swipe to control the snake.\n\n" +
     "Eat orange dots to grow.\n\n" +
-    "You can cross all four edges!\n\n" +
-    "Game Over happens only when you hit your own body."
+    "Cross all four edges freely.\n\n" +
+    "Avoid your own body!"
   );
 
 };
 
 
+// ============================
 // INITIAL STARTUP
+// ============================
 
 init();
 
