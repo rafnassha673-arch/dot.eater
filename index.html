@@ -54,6 +54,11 @@ header {
   color: #f06458;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .icon {
   background: #222;
   border: 1px solid #444;
@@ -269,7 +274,11 @@ canvas {
 
 <header>
   <div class="logo">ZYN<span>.</span>PLAY</div>
-  <button class="icon" id="help">?</button>
+
+  <div class="header-buttons">
+    <button class="icon" id="soundBtn" aria-label="Toggle sound">🔊</button>
+    <button class="icon" id="help">?</button>
+  </div>
 </header>
 
 <section class="title">
@@ -352,8 +361,8 @@ canvas {
 <script>
 
 // =============================
-// DOT EATER V5
-// ZYN PLAY
+// DOT EATER V6
+// ZYN PLAY - SOUND EDITION
 // =============================
 
 const canvas = document.getElementById("game");
@@ -379,6 +388,150 @@ let speed = 100;
 
 let lastTime = 0;
 let accumulator = 0;
+
+
+// =============================
+// SOUND SYSTEM
+// =============================
+
+let audioContext = null;
+
+let soundEnabled =
+  localStorage.getItem("zynSound") !== "off";
+
+function updateSoundButton() {
+  $("soundBtn").textContent =
+    soundEnabled ? "🔊" : "🔇";
+}
+
+function getAudioContext() {
+
+  const AudioEngine =
+    window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioEngine) return null;
+
+  if (!audioContext) {
+    audioContext = new AudioEngine();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+
+  return audioContext;
+}
+
+function playTone(frequency, duration, type, volume, endFrequency) {
+
+  if (!soundEnabled) return;
+
+  const ac = getAudioContext();
+  if (!ac) return;
+
+  const oscillator = ac.createOscillator();
+  const gain = ac.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(
+    frequency, ac.currentTime
+  );
+
+  if (endFrequency) {
+    oscillator.frequency.exponentialRampToValueAtTime(
+      endFrequency,
+      ac.currentTime + duration
+    );
+  }
+
+  gain.gain.setValueAtTime(volume, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    ac.currentTime + duration
+  );
+
+  oscillator.connect(gain);
+  gain.connect(ac.destination);
+
+  oscillator.start();
+  oscillator.stop(ac.currentTime + duration);
+}
+
+
+// Food sound
+function playEatSound() {
+  playTone(650, 0.09, "sine", 0.13, 1000);
+}
+
+// Game over sound
+function playGameOverSound() {
+
+  if (!soundEnabled) return;
+
+  const ac = getAudioContext();
+  if (!ac) return;
+
+  const notes = [
+    {f:420,t:0,d:0.18},
+    {f:330,t:0.2,d:0.18},
+    {f:220,t:0.4,d:0.4}
+  ];
+
+  notes.forEach(note => {
+
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(
+      note.f, ac.currentTime + note.t
+    );
+
+    gain.gain.setValueAtTime(
+      0.12, ac.currentTime + note.t
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      ac.currentTime + note.t + note.d
+    );
+
+    osc.connect(gain);
+    gain.connect(ac.destination);
+
+    osc.start(ac.currentTime + note.t);
+    osc.stop(ac.currentTime + note.t + note.d);
+
+  });
+}
+
+// Button click sound
+function playClickSound() {
+  playTone(500, 0.045, "sine", 0.055, 350);
+}
+
+// Sound ON / OFF
+$("soundBtn").addEventListener("click", () => {
+
+  soundEnabled = !soundEnabled;
+
+  localStorage.setItem(
+    "zynSound",
+    soundEnabled ? "on" : "off"
+  );
+
+  updateSoundButton();
+
+  if (soundEnabled) {
+    playTone(650, 0.1, "sine", 0.1, 850);
+  }
+
+});
+
+updateSoundButton();
+
+
+// ELEMENT HELPER
 
 const $ = id => document.getElementById(id);
 
@@ -595,8 +748,6 @@ function step() {
 
   direction = {...nextDirection};
 
-  // EDGE WRAPPING
-
   const head = {
 
     x:(snake[0].x+direction.x+SIZE)%SIZE,
@@ -607,8 +758,6 @@ function step() {
 
   const eating =
     head.x===food.x && head.y===food.y;
-
-  // SELF COLLISION
 
   const body = eating
     ? snake
@@ -630,6 +779,8 @@ function step() {
   if(eating) {
 
     score++;
+
+    playEatSound();
 
     if(score>best) {
 
@@ -709,6 +860,8 @@ function startGame() {
 function gameOver() {
 
   running=false;
+
+  playGameOverSound();
 
   $("endTitle").textContent="GAME OVER";
 
@@ -863,6 +1016,19 @@ $("help").onclick=()=>{
   );
 
 };
+
+
+// BUTTON CLICK SOUNDS
+
+document.querySelectorAll("button").forEach(btn => {
+
+  if(btn.id === "soundBtn") return;
+
+  btn.addEventListener("click", () => {
+    playClickSound();
+  });
+
+});
 
 
 // INITIALIZE
