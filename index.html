@@ -361,11 +361,15 @@ canvas {
 <script>
 
 // =============================
-// DOT EATER V6
-// ZYN PLAY - SOUND EDITION
+// DOT EATER V7
+// ZYN PLAY - SOUND FIXED
 // =============================
 
-const canvas = document.getElementById("game");
+// ELEMENT HELPER - DEFINED FIRST
+
+const $ = id => document.getElementById(id);
+
+const canvas = $("game");
 const ctx = canvas.getContext("2d");
 
 const SIZE = 20;
@@ -399,11 +403,6 @@ let audioContext = null;
 let soundEnabled =
   localStorage.getItem("zynSound") !== "off";
 
-function updateSoundButton() {
-  $("soundBtn").textContent =
-    soundEnabled ? "🔊" : "🔇";
-}
-
 function getAudioContext() {
 
   const AudioEngine =
@@ -416,13 +415,22 @@ function getAudioContext() {
   }
 
   if (audioContext.state === "suspended") {
-    audioContext.resume().catch(() => {});
+    audioContext.resume().catch(error => {
+      console.log("Audio resume:", error);
+    });
   }
 
   return audioContext;
 }
 
-function playTone(frequency, duration, type, volume, endFrequency) {
+function playTone(
+  frequency,
+  duration,
+  type = "sine",
+  volume = 0.08,
+  endFrequency = null,
+  delay = 0
+) {
 
   if (!soundEnabled) return;
 
@@ -432,85 +440,78 @@ function playTone(frequency, duration, type, volume, endFrequency) {
   const oscillator = ac.createOscillator();
   const gain = ac.createGain();
 
+  const start = ac.currentTime + delay;
+
   oscillator.type = type;
+
   oscillator.frequency.setValueAtTime(
-    frequency, ac.currentTime
+    frequency, start
   );
 
   if (endFrequency) {
     oscillator.frequency.exponentialRampToValueAtTime(
-      endFrequency,
-      ac.currentTime + duration
+      endFrequency, start + duration
     );
   }
 
-  gain.gain.setValueAtTime(volume, ac.currentTime);
+  gain.gain.setValueAtTime(0.001, start);
+
   gain.gain.exponentialRampToValueAtTime(
-    0.001,
-    ac.currentTime + duration
+    volume, start + 0.015
+  );
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.001, start + duration
   );
 
   oscillator.connect(gain);
   gain.connect(ac.destination);
 
-  oscillator.start();
-  oscillator.stop(ac.currentTime + duration);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
 }
 
 
-// Food sound
+// BUTTON SOUND
+
+function playClickSound() {
+  playTone(550, 0.07, "sine", 0.06, 380);
+}
+
+
+// FOOD SOUND
+
 function playEatSound() {
-  playTone(650, 0.09, "sine", 0.13, 1000);
+
+  playTone(520, 0.10, "sine", 0.12, 900);
+
+  playTone(900, 0.12, "sine", 0.09, 1200, 0.08);
+
 }
 
-// Game over sound
+
+// GAME OVER SOUND
+
 function playGameOverSound() {
 
-  if (!soundEnabled) return;
+  playTone(420, 0.20, "triangle", 0.10, 300);
 
-  const ac = getAudioContext();
-  if (!ac) return;
+  playTone(300, 0.22, "triangle", 0.10, 200, 0.20);
 
-  const notes = [
-    {f:420,t:0,d:0.18},
-    {f:330,t:0.2,d:0.18},
-    {f:220,t:0.4,d:0.4}
-  ];
+  playTone(200, 0.40, "triangle", 0.09, 110, 0.42);
 
-  notes.forEach(note => {
-
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(
-      note.f, ac.currentTime + note.t
-    );
-
-    gain.gain.setValueAtTime(
-      0.12, ac.currentTime + note.t
-    );
-
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      ac.currentTime + note.t + note.d
-    );
-
-    osc.connect(gain);
-    gain.connect(ac.destination);
-
-    osc.start(ac.currentTime + note.t);
-    osc.stop(ac.currentTime + note.t + note.d);
-
-  });
 }
 
-// Button click sound
-function playClickSound() {
-  playTone(500, 0.045, "sine", 0.055, 350);
+
+// SOUND BUTTON
+
+function updateSoundButton() {
+
+  $("soundBtn").textContent =
+    soundEnabled ? "🔊" : "🔇";
+
 }
 
-// Sound ON / OFF
 $("soundBtn").addEventListener("click", () => {
 
   soundEnabled = !soundEnabled;
@@ -523,7 +524,12 @@ $("soundBtn").addEventListener("click", () => {
   updateSoundButton();
 
   if (soundEnabled) {
-    playTone(650, 0.1, "sine", 0.1, 850);
+
+    // User interaction initializes/resumes audio
+    getAudioContext();
+
+    playTone(650, 0.14, "sine", 0.12, 950);
+
   }
 
 });
@@ -531,24 +537,26 @@ $("soundBtn").addEventListener("click", () => {
 updateSoundButton();
 
 
-// ELEMENT HELPER
-
-const $ = id => document.getElementById(id);
+// INITIAL BEST SCORE
 
 $("best").textContent = best;
 
 
+// =============================
 // FOOD GENERATOR
+// =============================
 
 function newFood() {
 
   let p;
 
   do {
+
     p = {
       x: Math.floor(Math.random() * SIZE),
       y: Math.floor(Math.random() * SIZE)
     };
+
   } while (
     snake.some(s => s.x === p.x && s.y === p.y)
   );
@@ -557,7 +565,9 @@ function newFood() {
 }
 
 
+// =============================
 // INITIALIZE
+// =============================
 
 function init() {
 
@@ -585,7 +595,9 @@ function init() {
 }
 
 
+// =============================
 // SCORE
+// =============================
 
 function updateStats() {
 
@@ -600,7 +612,9 @@ function updateStats() {
 }
 
 
+// =============================
 // BACKGROUND
+// =============================
 
 function drawBackground() {
 
@@ -608,6 +622,7 @@ function drawBackground() {
   ctx.fillRect(0,0,600,600);
 
   for(let y=15;y<600;y+=30) {
+
     for(let x=15;x<600;x+=30) {
 
       ctx.fillStyle = "#202020";
@@ -617,11 +632,15 @@ function drawBackground() {
       ctx.fill();
 
     }
+
   }
+
 }
 
 
+// =============================
 // FOOD
+// =============================
 
 function drawFood() {
 
@@ -640,11 +659,14 @@ function drawFood() {
   );
 
   ctx.fill();
+
   ctx.restore();
 }
 
 
+// =============================
 // SMOOTH POSITION
+// =============================
 
 function getSmoothPosition(current,old,alpha) {
 
@@ -667,7 +689,9 @@ function getSmoothPosition(current,old,alpha) {
 }
 
 
+// =============================
 // DRAW SNAKE
+// =============================
 
 function drawSnake(alpha) {
 
@@ -696,6 +720,7 @@ function drawSnake(alpha) {
     );
 
     ctx.fill();
+
     ctx.restore();
 
   });
@@ -727,11 +752,14 @@ function drawSnake(alpha) {
   ctx.arc(hx+px+3,hy+py+3,2,0,Math.PI*2);
 
   ctx.fill();
+
   ctx.restore();
 }
 
 
+// =============================
 // RENDER
+// =============================
 
 function draw(alpha=1) {
 
@@ -742,7 +770,9 @@ function draw(alpha=1) {
 }
 
 
+// =============================
 // MOVEMENT
+// =============================
 
 function step() {
 
@@ -805,7 +835,9 @@ function step() {
 }
 
 
+// =============================
 // 60 FPS GAME LOOP
+// =============================
 
 function gameLoop(time) {
 
@@ -835,9 +867,16 @@ function gameLoop(time) {
 }
 
 
+// =============================
 // START
+// =============================
 
 function startGame() {
+
+  // Start audio after user interaction
+  if(soundEnabled) {
+    getAudioContext();
+  }
 
   init();
 
@@ -855,7 +894,9 @@ function startGame() {
 }
 
 
+// =============================
 // GAME OVER
+// =============================
 
 function gameOver() {
 
@@ -873,7 +914,9 @@ function gameOver() {
 }
 
 
+// =============================
 // DIRECTION
+// =============================
 
 function setDirection(name) {
 
@@ -900,7 +943,9 @@ function setDirection(name) {
 }
 
 
+// =============================
 // MOBILE BUTTONS
+// =============================
 
 document.querySelectorAll("[data-dir]").forEach(btn=>{
 
@@ -914,7 +959,9 @@ document.querySelectorAll("[data-dir]").forEach(btn=>{
 });
 
 
+// =============================
 // KEYBOARD
+// =============================
 
 document.addEventListener("keydown",e=>{
 
@@ -949,7 +996,9 @@ document.addEventListener("keydown",e=>{
 });
 
 
+// =============================
 // SWIPE CONTROL
+// =============================
 
 let startX=0;
 let startY=0;
@@ -981,7 +1030,9 @@ canvas.addEventListener("pointerup",e=>{
 });
 
 
+// =============================
 // PAUSE
+// =============================
 
 function togglePause() {
 
@@ -998,7 +1049,9 @@ function togglePause() {
 }
 
 
+// =============================
 // BUTTONS
+// =============================
 
 $("startBtn").onclick=startGame;
 $("againBtn").onclick=startGame;
@@ -1020,18 +1073,18 @@ $("help").onclick=()=>{
 
 // BUTTON CLICK SOUNDS
 
-document.querySelectorAll("button").forEach(btn => {
+document.querySelectorAll("button").forEach(btn=>{
 
-  if(btn.id === "soundBtn") return;
+  if(btn.id==="soundBtn") return;
 
-  btn.addEventListener("click", () => {
-    playClickSound();
-  });
+  btn.addEventListener("click",playClickSound);
 
 });
 
 
+// =============================
 // INITIALIZE
+// =============================
 
 init();
 
