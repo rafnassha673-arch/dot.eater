@@ -5,6 +5,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#000000">
+<meta name="description" content="DOT EATER - A snake game by ZYN PLAY">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.png" type="image/png">
+<link rel="apple-touch-icon" href="./icon-512.png">
+
 <title>DOT EATER | ZYN PLAY</title>
 
 <style>
@@ -149,6 +155,7 @@ canvas {
   color: white;
   border-radius: 12px;
   font-size: 20px;
+  touch-action: manipulation;
 }
 
 .control:active {
@@ -228,7 +235,7 @@ canvas {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 @media(max-height:700px) {
@@ -278,51 +285,51 @@ canvas {
 
 <div class="board">
 
-  <canvas id="game" width="600" height="600"></canvas>
+<canvas id="game" width="600" height="600"></canvas>
 
-  <svg class="web" viewBox="0 0 180 180"
-       fill="none" stroke="#aaa" stroke-width="1">
+<svg class="web" viewBox="0 0 180 180"
+     fill="none" stroke="#aaa" stroke-width="1">
 
-    <path d="M0 0 L180 180 M0 0 L180 0
-    M0 0 L0 180 M0 0 L180 90
-    M0 0 L90 180 M0 0 L135 180"/>
+  <path d="M0 0 L180 180 M0 0 L180 0
+  M0 0 L0 180 M0 0 L180 90
+  M0 0 L90 180 M0 0 L135 180"/>
 
-    <path d="M20 10 Q50 50 10 20
-    M50 10 Q75 75 20 50
-    M90 15 Q100 95 40 90
-    M130 20 Q130 130 70 130"/>
+  <path d="M20 10 Q50 50 10 20
+  M50 10 Q75 75 20 50
+  M90 15 Q100 95 40 90
+  M130 20 Q130 130 70 130"/>
 
-  </svg>
+</svg>
 
-  <div class="spider">🕷️</div>
+<div class="spider">🕷️</div>
 
-  <div class="overlay" id="startScreen">
-    <div class="panel">
-      <h2>READY?</h2>
-      <p>Guide your snake and eat the glowing orange dots!</p>
-      <button id="startBtn">START GAME</button>
-    </div>
+<div class="overlay" id="startScreen">
+  <div class="panel">
+    <h2>READY?</h2>
+    <p>Guide your snake and eat the glowing orange dots!</p>
+    <button id="startBtn">START GAME</button>
   </div>
+</div>
 
-  <div class="overlay hidden" id="endScreen">
-    <div class="panel">
-      <h2 id="endTitle">GAME OVER</h2>
-      <p id="endText">Your game has ended.</p>
-      <button id="againBtn">PLAY AGAIN</button>
-    </div>
+<div class="overlay hidden" id="endScreen">
+  <div class="panel">
+    <h2 id="endTitle">GAME OVER</h2>
+    <p id="endText">Your game has ended.</p>
+    <button id="againBtn">PLAY AGAIN</button>
   </div>
+</div>
 
 </div>
 
 <div class="controls">
 
-  <button class="control" data-dir="up">↑</button>
+<button class="control" data-dir="up">↑</button>
 
-  <div class="control-row">
-    <button class="control" data-dir="left">←</button>
-    <button class="control" data-dir="down">↓</button>
-    <button class="control" data-dir="right">→</button>
-  </div>
+<div class="control-row">
+  <button class="control" data-dir="left">←</button>
+  <button class="control" data-dir="down">↓</button>
+  <button class="control" data-dir="right">→</button>
+</div>
 
 </div>
 
@@ -343,17 +350,14 @@ canvas {
 
 <script>
 
-// ============================
-// DOT EATER V3
+// DOT EATER V4
 // ZYN PLAY
-// ============================
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 const SIZE = 20;
 const CELL = 30;
-const FPS = 60;
 
 let snake = [];
 let previousSnake = [];
@@ -378,21 +382,17 @@ const $ = id => document.getElementById(id);
 $("best").textContent = best;
 
 
-// ============================
 // FOOD GENERATOR
-// ============================
 
 function newFood() {
 
   let p;
 
   do {
-
     p = {
       x: Math.floor(Math.random() * SIZE),
       y: Math.floor(Math.random() * SIZE)
     };
-
   } while (
     snake.some(s => s.x === p.x && s.y === p.y)
   );
@@ -401,9 +401,7 @@ function newFood() {
 }
 
 
-// ============================
 // INITIALIZE
-// ============================
 
 function init() {
 
@@ -431,9 +429,7 @@ function init() {
 }
 
 
-// ============================
 // SCORE
-// ============================
 
 function updateStats() {
 
@@ -448,9 +444,7 @@ function updateStats() {
 }
 
 
-// ============================
-// DRAW BACKGROUND
-// ============================
+// BACKGROUND
 
 function drawBackground() {
 
@@ -458,7 +452,6 @@ function drawBackground() {
   ctx.fillRect(0,0,600,600);
 
   for(let y=15;y<600;y+=30) {
-
     for(let x=15;x<600;x+=30) {
 
       ctx.fillStyle = "#202020";
@@ -472,40 +465,35 @@ function drawBackground() {
 }
 
 
-// ============================
-// DRAW FOOD
-// ============================
+// FOOD
 
 function drawFood() {
-
-  const fx = food.x * CELL + 15;
-  const fy = food.y * CELL + 15;
 
   ctx.save();
 
   ctx.shadowColor = "#ff8a22";
   ctx.shadowBlur = 22;
-
   ctx.fillStyle = "#ff8a22";
 
   ctx.beginPath();
-  ctx.arc(fx,fy,9,0,Math.PI*2);
-  ctx.fill();
 
+  ctx.arc(
+    food.x*CELL+15,
+    food.y*CELL+15,
+    9,0,Math.PI*2
+  );
+
+  ctx.fill();
   ctx.restore();
 }
 
 
-// ============================
-// SMOOTH SNAKE POSITION
-// ============================
+// SMOOTH POSITION
 
-function getSmoothPosition(current, old, alpha) {
+function getSmoothPosition(current,old,alpha) {
 
-  let dx = current.x - old.x;
-  let dy = current.y - old.y;
-
-  // Smooth edge wrapping
+  let dx = current.x-old.x;
+  let dy = current.y-old.y;
 
   if(dx > SIZE/2) dx -= SIZE;
   if(dx < -SIZE/2) dx += SIZE;
@@ -513,19 +501,17 @@ function getSmoothPosition(current, old, alpha) {
   if(dy > SIZE/2) dy -= SIZE;
   if(dy < -SIZE/2) dy += SIZE;
 
-  let x = old.x + dx * alpha;
-  let y = old.y + dy * alpha;
+  let x = old.x+dx*alpha;
+  let y = old.y+dy*alpha;
 
   return {
-    x: ((x % SIZE) + SIZE) % SIZE,
-    y: ((y % SIZE) + SIZE) % SIZE
+    x:((x%SIZE)+SIZE)%SIZE,
+    y:((y%SIZE)+SIZE)%SIZE
   };
 }
 
 
-// ============================
 // DRAW SNAKE
-// ============================
 
 function drawSnake(alpha) {
 
@@ -537,10 +523,9 @@ function drawSnake(alpha) {
 
   });
 
+  // BODY
 
-  // Body
-
-  positions.slice(1).forEach((p,i) => {
+  positions.slice(1).forEach(p => {
 
     ctx.save();
 
@@ -551,26 +536,22 @@ function drawSnake(alpha) {
     ctx.beginPath();
 
     ctx.arc(
-      p.x * CELL + 15,
-      p.y * CELL + 15,
-      8,
-      0,
-      Math.PI*2
+      p.x*CELL+15,
+      p.y*CELL+15,
+      8,0,Math.PI*2
     );
 
     ctx.fill();
-
     ctx.restore();
 
   });
 
-
-  // Head
+  // HEAD
 
   const h = positions[0];
 
-  const hx = h.x * CELL + 15;
-  const hy = h.y * CELL + 15;
+  const hx = h.x*CELL+15;
+  const hy = h.y*CELL+15;
 
   ctx.save();
 
@@ -582,13 +563,13 @@ function drawSnake(alpha) {
   ctx.arc(hx,hy,12,0,Math.PI*2);
   ctx.fill();
 
-  // Eyes
+  // EYES
 
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#180909";
 
-  const px = direction.x * 4;
-  const py = direction.y * 4;
+  const px = direction.x*4;
+  const py = direction.y*4;
 
   ctx.beginPath();
 
@@ -596,15 +577,11 @@ function drawSnake(alpha) {
   ctx.arc(hx+px+3,hy+py+3,2,0,Math.PI*2);
 
   ctx.fill();
-
   ctx.restore();
-
 }
 
 
-// ============================
 // RENDER
-// ============================
 
 function draw(alpha=1) {
 
@@ -615,9 +592,7 @@ function draw(alpha=1) {
 }
 
 
-// ============================
-// GAME MOVEMENT
-// ============================
+// MOVEMENT
 
 function step() {
 
@@ -627,16 +602,14 @@ function step() {
 
   const head = {
 
-    x: (snake[0].x + direction.x + SIZE) % SIZE,
+    x:(snake[0].x+direction.x+SIZE)%SIZE,
 
-    y: (snake[0].y + direction.y + SIZE) % SIZE
+    y:(snake[0].y+direction.y+SIZE)%SIZE
 
   };
 
   const eating =
-    head.x === food.x &&
-    head.y === food.y;
-
+    head.x===food.x && head.y===food.y;
 
   // SELF COLLISION
 
@@ -645,7 +618,7 @@ function step() {
     : snake.slice(0,-1);
 
   if(body.some(p =>
-    p.x === head.x && p.y === head.y
+    p.x===head.x && p.y===head.y
   )) {
 
     gameOver();
@@ -653,33 +626,29 @@ function step() {
 
   }
 
-
-  // SAVE PREVIOUS POSITIONS
+  // PREVIOUS POSITIONS
 
   previousSnake = snake.map(p => ({...p}));
 
   snake.unshift(head);
 
-
-  // FOOD EATEN
+  // EATING
 
   if(eating) {
 
     score++;
 
-    if(score > best) {
+    if(score>best) {
 
-      best = score;
+      best=score;
 
       localStorage.setItem("zynBest",best);
 
     }
 
-    food = newFood();
+    food=newFood();
 
-    // Speed increases gradually
-
-    speed = Math.max(45,100-score*3);
+    speed=Math.max(45,100-score*3);
 
     updateStats();
 
@@ -692,9 +661,7 @@ function step() {
 }
 
 
-// ============================
-// 60 FPS ANIMATION LOOP
-// ============================
+// 60 FPS LOOP
 
 function gameLoop(time) {
 
@@ -702,117 +669,98 @@ function gameLoop(time) {
 
   if(!running || paused) return;
 
-  if(!lastTime) lastTime = time;
+  if(!lastTime) lastTime=time;
 
-  const delta = Math.min(time-lastTime,50);
+  const delta=Math.min(time-lastTime,50);
 
-  lastTime = time;
+  lastTime=time;
 
-  accumulator += delta;
+  accumulator+=delta;
 
-
-  while(accumulator >= speed && running && !paused) {
+  while(accumulator>=speed && running && !paused) {
 
     step();
-
-    accumulator -= speed;
+    accumulator-=speed;
 
   }
 
-
-  // Render at screen refresh rate
-
   if(running) {
-
     draw(accumulator/speed);
-
   }
 
 }
 
 
-// ============================
-// START GAME
-// ============================
+// START
 
 function startGame() {
 
   init();
 
-  running = true;
-  paused = false;
+  running=true;
+  paused=false;
 
-  lastTime = 0;
-  accumulator = 0;
+  lastTime=0;
+  accumulator=0;
 
   $("startScreen").classList.add("hidden");
   $("endScreen").classList.add("hidden");
 
-  $("pauseBtn").textContent = "Ⅱ PAUSE";
+  $("pauseBtn").textContent="Ⅱ PAUSE";
 
 }
 
 
-// ============================
 // GAME OVER
-// ============================
 
 function gameOver() {
 
-  running = false;
+  running=false;
 
-  $("endTitle").textContent = "GAME OVER";
+  $("endTitle").textContent="GAME OVER";
 
-  $("endText").textContent =
-    "Your score: " + score +
-    " · Best: " + best;
+  $("endText").textContent=
+    "Your score: "+score+" · Best: "+best;
 
   $("endScreen").classList.remove("hidden");
 
 }
 
 
-// ============================
-// DIRECTION CONTROL
-// ============================
+// DIRECTION
 
 function setDirection(name) {
 
-  const dirs = {
+  const dirs={
 
-    up:    {x:0,y:-1},
-    down:  {x:0,y:1},
-    left:  {x:-1,y:0},
-    right: {x:1,y:0}
+    up:{x:0,y:-1},
+    down:{x:0,y:1},
+    left:{x:-1,y:0},
+    right:{x:1,y:0}
 
   };
 
-  const d = dirs[name];
+  const d=dirs[name];
 
   if(!d) return;
 
-  // Prevent reverse movement
-
   if(
-    d.x === -direction.x &&
-    d.y === -direction.y
+    d.x===-direction.x &&
+    d.y===-direction.y
   ) return;
 
-  nextDirection = d;
+  nextDirection=d;
 
 }
 
 
-// ============================
 // MOBILE BUTTONS
-// ============================
 
-document.querySelectorAll("[data-dir]").forEach(btn => {
+document.querySelectorAll("[data-dir]").forEach(btn=>{
 
-  btn.addEventListener("pointerdown",e => {
+  btn.addEventListener("pointerdown",e=>{
 
     e.preventDefault();
-
     setDirection(btn.dataset.dir);
 
   });
@@ -820,13 +768,11 @@ document.querySelectorAll("[data-dir]").forEach(btn => {
 });
 
 
-// ============================
 // KEYBOARD
-// ============================
 
-document.addEventListener("keydown",e => {
+document.addEventListener("keydown",e=>{
 
-  const keys = {
+  const keys={
 
     ArrowUp:"up",
     ArrowDown:"down",
@@ -843,15 +789,13 @@ document.addEventListener("keydown",e => {
   if(keys[e.key]) {
 
     e.preventDefault();
-
     setDirection(keys[e.key]);
 
   }
 
-  if(e.key === " ") {
+  if(e.key===" ") {
 
     e.preventDefault();
-
     togglePause();
 
   }
@@ -859,88 +803,76 @@ document.addEventListener("keydown",e => {
 });
 
 
-// ============================
-// SWIPE CONTROL
-// ============================
+// SWIPE
 
-let startX = 0;
-let startY = 0;
+let startX=0;
+let startY=0;
 
-canvas.addEventListener("pointerdown",e => {
+canvas.addEventListener("pointerdown",e=>{
 
-  startX = e.clientX;
-  startY = e.clientY;
+  startX=e.clientX;
+  startY=e.clientY;
 
 });
 
-canvas.addEventListener("pointerup",e => {
+canvas.addEventListener("pointerup",e=>{
 
-  const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
+  const dx=e.clientX-startX;
+  const dy=e.clientY-startY;
 
-  if(Math.max(Math.abs(dx),Math.abs(dy)) < 10) return;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<10) return;
 
-  if(Math.abs(dx) > Math.abs(dy)) {
+  if(Math.abs(dx)>Math.abs(dy)) {
 
-    setDirection(dx > 0 ? "right" : "left");
+    setDirection(dx>0?"right":"left");
 
   } else {
 
-    setDirection(dy > 0 ? "down" : "up");
+    setDirection(dy>0?"down":"up");
 
   }
 
 });
 
 
-// ============================
-// PAUSE / RESUME
-// ============================
+// PAUSE
 
 function togglePause() {
 
   if(!running) return;
 
-  paused = !paused;
+  paused=!paused;
 
-  $("pauseBtn").textContent =
-    paused ? "▶ RESUME" : "Ⅱ PAUSE";
+  $("pauseBtn").textContent=
+    paused?"▶ RESUME":"Ⅱ PAUSE";
 
-  lastTime = 0;
-  accumulator = 0;
+  lastTime=0;
+  accumulator=0;
 
 }
 
 
-// ============================
-// BUTTON EVENTS
-// ============================
+// BUTTONS
 
-$("startBtn").onclick = startGame;
+$("startBtn").onclick=startGame;
+$("againBtn").onclick=startGame;
+$("resetBtn").onclick=startGame;
+$("pauseBtn").onclick=togglePause;
 
-$("againBtn").onclick = startGame;
-
-$("resetBtn").onclick = startGame;
-
-$("pauseBtn").onclick = togglePause;
-
-
-$("help").onclick = () => {
+$("help").onclick=()=>{
 
   alert(
-    "DOT EATER\n\n" +
-    "Swipe to control the snake.\n\n" +
-    "Eat orange dots to grow.\n\n" +
-    "Cross all four edges freely.\n\n" +
+    "DOT EATER\n\n"+
+    "Swipe to control the snake.\n\n"+
+    "Eat orange dots to grow.\n\n"+
+    "Cross all four edges freely.\n\n"+
     "Avoid your own body!"
   );
 
 };
 
 
-// ============================
-// INITIAL STARTUP
-// ============================
+// STARTUP
 
 init();
 
