@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "dot-eater-v1";
+const CACHE_NAME = "dot-eater-v2";
 
 const APP_FILES = [
   "./",
@@ -12,7 +12,6 @@ const APP_FILES = [
 
 // INSTALL
 self.addEventListener("install", event => {
-
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(APP_FILES);
@@ -20,12 +19,10 @@ self.addEventListener("install", event => {
   );
 
   self.skipWaiting();
-
 });
 
 // ACTIVATE
 self.addEventListener("activate", event => {
-
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
@@ -37,7 +34,6 @@ self.addEventListener("activate", event => {
   );
 
   self.clients.claim();
-
 });
 
 // FETCH
@@ -61,13 +57,11 @@ self.addEventListener("fetch", event => {
           response.status === 200 &&
           response.type === "basic"
         ) {
-
           const copy = response.clone();
 
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, copy);
           });
-
         }
 
         return response;
